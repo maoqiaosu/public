@@ -1,0 +1,1788 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PRDemo | 把 PRD 长在可交互 Demo 上</title>
+    <meta
+      name="description"
+      content="PRDemo 是一个 Chrome 插件，把 PRD 里的产品逻辑、问题分析和协作讨论挂载到可交互 HTML Demo 上，形成一种新的产品交付方式。"
+    />
+    <style>
+      :root {
+        --ink: #10201d;
+        --muted: #60736e;
+        --faint: #e6f0ec;
+        --paper: #fffaf0;
+        --paper-2: #f4fbf7;
+        --teal: #087568;
+        --teal-deep: #064e47;
+        --mint: #c8f2df;
+        --orange: #ff9f1c;
+        --rose: #e94f64;
+        --blue: #315dff;
+        --shadow: 0 28px 90px rgba(13, 35, 30, 0.16);
+        --radius-xl: 42px;
+        --radius-lg: 28px;
+        --radius-md: 18px;
+        color: var(--ink);
+        font-family:
+          "Avenir Next",
+          "PingFang SC",
+          "Hiragino Sans GB",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(255, 159, 28, 0.3), transparent 18rem),
+          radial-gradient(circle at 82% 8%, rgba(8, 117, 104, 0.22), transparent 24rem),
+          radial-gradient(circle at 72% 78%, rgba(49, 93, 255, 0.11), transparent 24rem),
+          linear-gradient(135deg, #fffaf0 0%, #f1fbf6 52%, #fff7e8 100%);
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        content: "";
+        opacity: 0.45;
+        background-image:
+          linear-gradient(rgba(8, 117, 104, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(8, 117, 104, 0.05) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 36px));
+        margin: 0 auto;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 26px 0 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand img {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        box-shadow: 0 10px 24px rgba(8, 117, 104, 0.18);
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 18px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+      }
+
+      .brand span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .nav-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .nav-pills span {
+        border: 1px solid rgba(8, 117, 104, 0.15);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.64);
+        color: var(--teal-deep);
+        font-size: 12px;
+        font-weight: 850;
+        backdrop-filter: blur(16px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+        gap: 44px;
+        align-items: center;
+        padding: 58px 0 88px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(8, 117, 104, 0.18);
+        border-radius: 999px;
+        padding: 9px 13px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--teal);
+        font-size: 13px;
+        font-weight: 950;
+        box-shadow: 0 12px 28px rgba(8, 117, 104, 0.08);
+      }
+
+      .eyebrow::before {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--orange);
+        content: "";
+        box-shadow: 0 0 0 5px rgba(255, 159, 28, 0.16);
+      }
+
+      h1 {
+        max-width: 660px;
+        margin: 18px 0 18px;
+        font-family:
+          "Songti SC",
+          "STSong",
+          "Noto Serif CJK SC",
+          serif;
+        font-size: clamp(52px, 8vw, 102px);
+        font-weight: 900;
+        letter-spacing: -0.08em;
+        line-height: 0.92;
+      }
+
+      .hero-copy {
+        max-width: 620px;
+        margin: 0;
+        color: #415550;
+        font-size: clamp(17px, 2vw, 21px);
+        font-weight: 650;
+        line-height: 1.8;
+      }
+
+      .hero-copy strong {
+        color: var(--teal-deep);
+        font-weight: 950;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .fake-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50px;
+        border: 0;
+        border-radius: 17px;
+        padding: 0 18px;
+        background: var(--teal);
+        color: white;
+        font-size: 15px;
+        font-weight: 950;
+        box-shadow: 0 18px 38px rgba(8, 117, 104, 0.2);
+      }
+
+      .fake-button.secondary {
+        border: 1px solid rgba(8, 117, 104, 0.16);
+        background: rgba(255, 255, 255, 0.76);
+        color: var(--teal-deep);
+        box-shadow: none;
+      }
+
+      .proof-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 34px;
+      }
+
+      .proof {
+        border: 1px solid rgba(8, 117, 104, 0.12);
+        border-radius: 18px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.54);
+      }
+
+      .proof b {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 23px;
+        font-weight: 950;
+      }
+
+      .proof span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .demo-stage {
+        position: relative;
+        min-height: 560px;
+      }
+
+      .browser {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(8, 117, 104, 0.14);
+        border-radius: var(--radius-xl);
+        background: rgba(255, 255, 255, 0.76);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(20px);
+        animation: floatIn 760ms ease both;
+      }
+
+      .browser-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid rgba(8, 117, 104, 0.11);
+        padding: 16px 18px;
+        background: rgba(255, 255, 255, 0.66);
+      }
+
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: #ff6b6b;
+      }
+
+      .dot:nth-child(2) {
+        background: #ffbf47;
+      }
+
+      .dot:nth-child(3) {
+        background: #38c172;
+      }
+
+      .address {
+        flex: 1;
+        margin-left: 10px;
+        border-radius: 999px;
+        padding: 8px 13px;
+        background: #eff8f4;
+        color: #58716a;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .demo-canvas {
+        padding: 22px;
+      }
+
+      .demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 0.72fr;
+        gap: 16px;
+      }
+
+      .demo-card {
+        border: 1px solid rgba(8, 117, 104, 0.12);
+        border-radius: 24px;
+        padding: 18px;
+        background: linear-gradient(145deg, #ffffff, #f4fbf7);
+      }
+
+      .demo-card.dark {
+        min-height: 202px;
+        background:
+          radial-gradient(circle at 80% 18%, rgba(255, 159, 28, 0.36), transparent 8rem),
+          linear-gradient(140deg, #132622, #0d4039);
+        color: white;
+      }
+
+      .demo-card h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .demo-line {
+        height: 11px;
+        margin: 10px 0;
+        border-radius: 999px;
+        background: rgba(8, 117, 104, 0.12);
+      }
+
+      .demo-line.short {
+        width: 62%;
+      }
+
+      .demo-line.orange {
+        background: rgba(255, 159, 28, 0.42);
+      }
+
+      .task-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .task {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 14px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.12);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .tag {
+        border-radius: 999px;
+        padding: 5px 8px;
+        background: rgba(200, 242, 223, 0.18);
+        color: #dffcef;
+        font-size: 11px;
+      }
+
+      .annotation {
+        position: absolute;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(8, 117, 104, 0.15);
+        border-radius: 999px;
+        padding: 8px 12px 8px 8px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--teal-deep);
+        font-size: 13px;
+        font-weight: 950;
+        box-shadow: 0 16px 38px rgba(13, 35, 30, 0.14);
+        animation: pop 640ms ease both;
+      }
+
+      .annotation b {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: var(--teal);
+        color: white;
+        font-size: 14px;
+      }
+
+      .annotation.one {
+        top: 86px;
+        right: -10px;
+        animation-delay: 180ms;
+      }
+
+      .annotation.two {
+        right: 34px;
+        bottom: 168px;
+        animation-delay: 300ms;
+      }
+
+      .annotation.three {
+        left: -8px;
+        bottom: 84px;
+        animation-delay: 420ms;
+      }
+
+      .note-card {
+        position: absolute;
+        right: 14px;
+        bottom: -8px;
+        z-index: 5;
+        width: min(360px, 84vw);
+        border: 1px solid rgba(8, 117, 104, 0.18);
+        border-radius: 26px;
+        padding: 18px;
+        background: rgba(255, 253, 246, 0.96);
+        box-shadow: 0 24px 72px rgba(13, 35, 30, 0.18);
+        animation: floatIn 820ms ease 520ms both;
+      }
+
+      .note-card header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .note-card h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .note-card small {
+        color: #78908a;
+        font-family: "SF Mono", "Menlo", monospace;
+        font-weight: 850;
+      }
+
+      .note-card p {
+        margin: 0;
+        color: #415550;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.7;
+      }
+
+      .product-anatomy {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .anatomy-stage,
+      .thought-panel,
+      .storyboard,
+      .thinking-board {
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: var(--radius-xl);
+        background: rgba(255, 255, 255, 0.72);
+        box-shadow: 0 18px 60px rgba(13, 35, 30, 0.09);
+      }
+
+      .anatomy-stage {
+        position: relative;
+        min-height: 520px;
+        overflow: hidden;
+        padding: 22px;
+      }
+
+      .anatomy-stage::before {
+        position: absolute;
+        inset: 16px;
+        border: 1px dashed rgba(8, 117, 104, 0.18);
+        border-radius: 34px;
+        content: "";
+      }
+
+      .layer-label {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 7px 10px;
+        background: rgba(8, 117, 104, 0.1);
+        color: var(--teal-deep);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .demo-product {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 14px;
+        margin-top: 18px;
+        border-radius: 28px;
+        padding: 16px;
+        background:
+          linear-gradient(90deg, rgba(16, 32, 29, 0.06) 1px, transparent 1px),
+          linear-gradient(rgba(16, 32, 29, 0.05) 1px, transparent 1px),
+          #fbfffb;
+        background-size: 28px 28px;
+      }
+
+      .demo-sidebar {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+        border-radius: 20px;
+        padding: 12px;
+        background: #10201d;
+        color: white;
+      }
+
+      .demo-sidebar span {
+        border-radius: 12px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.09);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .demo-sidebar span:first-child {
+        background: var(--mint);
+        color: var(--teal-deep);
+      }
+
+      .demo-main {
+        display: grid;
+        gap: 12px;
+      }
+
+      .demo-hero-card,
+      .demo-row-card {
+        border: 1px solid rgba(8, 117, 104, 0.12);
+        border-radius: 20px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .demo-hero-card {
+        min-height: 132px;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(255, 159, 28, 0.24), transparent 10rem),
+          #ffffff;
+      }
+
+      .demo-hero-card strong,
+      .demo-row-card strong {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 16px;
+      }
+
+      .mini-bars {
+        display: grid;
+        grid-template-columns: 1fr 0.7fr 0.5fr;
+        gap: 8px;
+      }
+
+      .mini-bars span {
+        height: 46px;
+        border-radius: 14px;
+        background: rgba(8, 117, 104, 0.11);
+      }
+
+      .mini-bars span:nth-child(2) {
+        background: rgba(255, 159, 28, 0.28);
+      }
+
+      .mini-bars span:nth-child(3) {
+        background: rgba(49, 93, 255, 0.13);
+      }
+
+      .plugin-toolbar {
+        position: absolute;
+        top: 76px;
+        right: 26px;
+        z-index: 3;
+        display: grid;
+        gap: 8px;
+        border: 1px solid rgba(8, 117, 104, 0.16);
+        border-radius: 22px;
+        padding: 10px;
+        background: rgba(255, 253, 246, 0.94);
+        box-shadow: 0 20px 50px rgba(13, 35, 30, 0.14);
+      }
+
+      .plugin-toolbar span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 14px;
+        background: rgba(8, 117, 104, 0.1);
+        color: var(--teal-deep);
+        font-weight: 950;
+      }
+
+      .plugin-toolbar span:nth-child(2) {
+        background: var(--teal);
+        color: white;
+      }
+
+      .plus-bubble {
+        position: absolute;
+        right: 168px;
+        top: 214px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: var(--orange);
+        color: white;
+        font-size: 26px;
+        font-weight: 900;
+        box-shadow: 0 16px 36px rgba(255, 159, 28, 0.34);
+      }
+
+      .editor-window {
+        position: absolute;
+        right: 62px;
+        bottom: 32px;
+        z-index: 4;
+        width: min(360px, calc(100% - 72px));
+        border: 1px solid rgba(8, 117, 104, 0.18);
+        border-radius: 26px;
+        background: #fffdf6;
+        box-shadow: 0 22px 64px rgba(13, 35, 30, 0.17);
+      }
+
+      .editor-window header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(8, 117, 104, 0.1);
+        padding: 14px 16px;
+      }
+
+      .editor-window h3 {
+        margin: 0;
+        font-size: 17px;
+      }
+
+      .editor-tools {
+        display: flex;
+        gap: 6px;
+        padding: 12px 14px 0;
+      }
+
+      .editor-tools span {
+        width: 30px;
+        height: 30px;
+        border-radius: 11px;
+        background: rgba(8, 117, 104, 0.08);
+      }
+
+      .editor-copy {
+        padding: 12px 16px 18px;
+      }
+
+      .editor-copy b {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 14px;
+      }
+
+      .editor-copy p {
+        margin: 8px 0 0;
+        color: #425853;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.65;
+      }
+
+      .thought-panel {
+        display: grid;
+        gap: 12px;
+        padding: 20px;
+      }
+
+      .thought-panel h3 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.15;
+      }
+
+      .thought-panel p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 650;
+        line-height: 1.65;
+      }
+
+      .callout-list {
+        display: grid;
+        gap: 10px;
+        margin: 4px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .callout-list li {
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(8, 117, 104, 0.08);
+      }
+
+      .callout-list b {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--teal-deep);
+        font-size: 14px;
+      }
+
+      .callout-list span {
+        color: #526a64;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.55;
+      }
+
+      .storyboard {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .story-card {
+        position: relative;
+        min-height: 280px;
+        overflow: hidden;
+        border-radius: 26px;
+        padding: 18px;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(255, 159, 28, 0.2), transparent 10rem),
+          #ffffff;
+      }
+
+      .story-card:nth-child(even) {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(8, 117, 104, 0.2), transparent 10rem),
+          #f8fffb;
+      }
+
+      .story-index {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: #10201d;
+        color: white;
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .story-card h3 {
+        margin: 16px 0 10px;
+        font-size: 21px;
+      }
+
+      .story-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 650;
+        line-height: 1.65;
+      }
+
+      .mini-screen {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        left: 14px;
+        display: grid;
+        gap: 8px;
+        border: 1px solid rgba(8, 117, 104, 0.12);
+        border-radius: 18px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .mini-screen span {
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(8, 117, 104, 0.14);
+      }
+
+      .mini-screen span:nth-child(2) {
+        width: 70%;
+        background: rgba(255, 159, 28, 0.38);
+      }
+
+      .mini-screen span:nth-child(3) {
+        width: 48%;
+      }
+
+      .thinking-board {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .thinking-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .thinking-item {
+        border: 1px solid rgba(8, 117, 104, 0.12);
+        border-radius: 20px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .thinking-item strong {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 16px;
+      }
+
+      .thinking-item span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .thinking-item.is-active {
+        background: #10201d;
+      }
+
+      .thinking-item.is-active strong {
+        color: white;
+      }
+
+      .thinking-item.is-active span {
+        color: rgba(255, 255, 255, 0.68);
+      }
+
+      .thinking-detail {
+        border-radius: 28px;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(200, 242, 223, 0.7), transparent 16rem),
+          #fffdf6;
+      }
+
+      .thinking-detail h3 {
+        margin: 0 0 16px;
+        font-size: 28px;
+      }
+
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .decision {
+        border-radius: 18px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .decision b {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 13px;
+      }
+
+      .decision p {
+        margin: 8px 0 0;
+        color: #50655f;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.6;
+      }
+
+      .artifact-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .artifact {
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: 22px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.66);
+      }
+
+      .artifact strong {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 18px;
+      }
+
+      .artifact span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.55;
+      }
+
+      .manifesto-card {
+        display: grid;
+        grid-template-columns: 0.82fr 1.18fr;
+        gap: 18px;
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: var(--radius-xl);
+        padding: 18px;
+        background:
+          radial-gradient(circle at 8% 12%, rgba(255, 159, 28, 0.22), transparent 18rem),
+          rgba(255, 255, 255, 0.74);
+        box-shadow: var(--shadow);
+      }
+
+      .name-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 360px;
+        border-radius: 30px;
+        padding: 26px;
+        background: #10201d;
+        color: white;
+      }
+
+      .name-card strong {
+        display: block;
+        font-size: clamp(44px, 7vw, 78px);
+        font-weight: 950;
+        letter-spacing: -0.08em;
+        line-height: 0.94;
+      }
+
+      .name-card strong span {
+        color: var(--orange);
+      }
+
+      .name-card p {
+        margin: 20px 0 0;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 15px;
+        font-weight: 750;
+        line-height: 1.7;
+      }
+
+      .paradigm-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .paradigm {
+        border-radius: 24px;
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .paradigm b {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 18px;
+      }
+
+      .paradigm p {
+        margin: 8px 0 0;
+        color: #50655f;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.65;
+      }
+
+      .section {
+        padding: 62px 0;
+      }
+
+      .section-title {
+        max-width: 740px;
+        margin: 0 0 26px;
+        font-family:
+          "Songti SC",
+          "STSong",
+          "Noto Serif CJK SC",
+          serif;
+        font-size: clamp(34px, 5vw, 58px);
+        line-height: 1.05;
+        letter-spacing: -0.06em;
+      }
+
+      .section-lead {
+        max-width: 760px;
+        margin: -12px 0 34px;
+        color: var(--muted);
+        font-size: 18px;
+        font-weight: 650;
+        line-height: 1.8;
+      }
+
+      .problem-grid {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 18px;
+      }
+
+      .problem-card,
+      .answer-card {
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: var(--radius-lg);
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.68);
+        box-shadow: 0 18px 50px rgba(13, 35, 30, 0.08);
+      }
+
+      .problem-card {
+        background:
+          linear-gradient(135deg, rgba(233, 79, 100, 0.08), transparent),
+          rgba(255, 255, 255, 0.68);
+      }
+
+      .answer-card {
+        background:
+          radial-gradient(circle at 92% 0%, rgba(200, 242, 223, 0.7), transparent 18rem),
+          #10201d;
+        color: white;
+      }
+
+      .label {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 7px 10px;
+        background: rgba(8, 117, 104, 0.09);
+        color: var(--teal);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .answer-card .label {
+        background: rgba(255, 255, 255, 0.12);
+        color: #dffcef;
+      }
+
+      .problem-card h3,
+      .answer-card h3 {
+        margin: 16px 0 12px;
+        font-size: 27px;
+        line-height: 1.2;
+      }
+
+      .problem-card p,
+      .answer-card p {
+        margin: 0;
+        color: #5c716b;
+        font-size: 16px;
+        font-weight: 650;
+        line-height: 1.75;
+      }
+
+      .answer-card p {
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .flow-step {
+        position: relative;
+        min-height: 210px;
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        background: rgba(255, 255, 255, 0.72);
+        overflow: hidden;
+      }
+
+      .flow-step::after {
+        position: absolute;
+        right: -28px;
+        bottom: -44px;
+        color: rgba(8, 117, 104, 0.08);
+        content: attr(data-step);
+        font-size: 116px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .flow-step strong {
+        display: block;
+        color: var(--teal-deep);
+        font-size: 20px;
+        font-weight: 950;
+      }
+
+      .flow-step p {
+        position: relative;
+        z-index: 1;
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 650;
+        line-height: 1.65;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .feature {
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .feature-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        margin-bottom: 18px;
+        border-radius: 16px;
+        background: var(--mint);
+        color: var(--teal-deep);
+        font-size: 24px;
+        font-weight: 950;
+      }
+
+      .feature h3 {
+        margin: 0 0 10px;
+        font-size: 22px;
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 650;
+        line-height: 1.7;
+      }
+
+      .portfolio-card {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: var(--radius-xl);
+        padding: 24px;
+        background:
+          radial-gradient(circle at 10% 10%, rgba(255, 159, 28, 0.22), transparent 18rem),
+          rgba(255, 255, 255, 0.72);
+        box-shadow: var(--shadow);
+      }
+
+      .resume-points {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .resume-points li {
+        border-radius: 18px;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.72);
+        color: #415550;
+        font-weight: 780;
+        line-height: 1.55;
+      }
+
+      .quote {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 310px;
+        border-radius: 30px;
+        padding: 26px;
+        background: #10201d;
+        color: white;
+      }
+
+      .quote p {
+        margin: 0;
+        font-family:
+          "Songti SC",
+          "STSong",
+          "Noto Serif CJK SC",
+          serif;
+        font-size: clamp(28px, 4vw, 48px);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        line-height: 1.08;
+      }
+
+      .quote span {
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      footer {
+        padding: 44px 0 56px;
+      }
+
+      .footer-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        border: 1px solid rgba(8, 117, 104, 0.13);
+        border-radius: 30px;
+        padding: 22px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .footer-card strong {
+        display: block;
+        font-size: 20px;
+      }
+
+      .footer-card span {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 750;
+      }
+
+      @keyframes floatIn {
+        from {
+          opacity: 0;
+          transform: translateY(22px) scale(0.98);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: translateY(12px) scale(0.94);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .product-anatomy,
+        .problem-grid,
+        .thinking-board,
+        .manifesto-card,
+        .portfolio-card {
+          grid-template-columns: 1fr;
+        }
+
+        .demo-stage {
+          min-height: 620px;
+        }
+
+        .flow,
+        .feature-grid,
+        .storyboard {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .artifact-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .shell {
+          width: min(100% - 24px, 1180px);
+        }
+
+        .nav {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .hero {
+          gap: 28px;
+          padding-top: 34px;
+        }
+
+        h1 {
+          font-size: 58px;
+        }
+
+        .proof-strip,
+        .flow,
+        .feature-grid,
+        .storyboard,
+        .decision-grid,
+        .demo-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .annotation.one,
+        .annotation.two,
+        .annotation.three,
+        .note-card {
+          position: static;
+          margin: 12px 0 0;
+        }
+
+        .demo-stage {
+          min-height: 0;
+        }
+
+        .anatomy-stage {
+          min-height: 690px;
+          padding: 14px;
+        }
+
+        .demo-product {
+          grid-template-columns: 1fr;
+        }
+
+        .plugin-toolbar,
+        .plus-bubble,
+        .editor-window {
+          position: static;
+          margin-top: 12px;
+        }
+
+        .plugin-toolbar {
+          display: flex;
+          width: max-content;
+        }
+
+        .footer-card {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="shell nav" aria-label="产品导航">
+      <div class="brand">
+        <img src="icon.svg" alt="PRDemo 标识" />
+        <div>
+          <strong>PRDemo</strong>
+          <span>PRD logic, Demo experience</span>
+        </div>
+      </div>
+      <div class="nav-pills" aria-label="产品关键词">
+        <span>PRD × Demo</span>
+        <span>AI Prototype</span>
+        <span>Cloud Collaboration</span>
+      </div>
+    </nav>
+
+    <main>
+      <section class="shell hero" aria-label="产品概览">
+        <div>
+          <span class="eyebrow">PRD 逻辑 × Demo 体验</span>
+          <h1>一种新的产品交付方式</h1>
+          <p class="hero-copy">
+            PRDemo 是一个套在任意 HTML Demo 外面的 Chrome 插件。它把传统 PRD 里的
+            <strong>设计逻辑、问题分析、用户行为假设和验证思路</strong>
+            挂载到可交互 Demo 上，让读者直接在体验产品时理解产品判断。
+          </p>
+          <div class="hero-actions" aria-label="展示按钮">
+            <span class="fake-button">一句话：把 PRD 长在 Demo 上</span>
+            <span class="fake-button secondary">用可交互原型替代静态文档沟通</span>
+          </div>
+          <div class="proof-strip">
+            <div class="proof">
+              <b>0</b>
+              <span>不改造 Demo 源码</span>
+            </div>
+            <div class="proof">
+              <b>1</b>
+              <span>一条链接承载方案与批注</span>
+            </div>
+            <div class="proof">
+              <b>∞</b>
+              <span>支持持续迭代和协作</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-stage" aria-label="产品界面示意">
+          <div class="browser">
+            <div class="browser-top">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="address">demo.html?prd_space=prd_PRDemo_20260517</span>
+            </div>
+            <div class="demo-canvas">
+              <div class="demo-grid">
+                <article class="demo-card dark">
+                  <h3>技能库管理 Demo</h3>
+                  <div class="task-list">
+                    <div class="task">创建技能 <span class="tag">核心路径</span></div>
+                    <div class="task">复用推荐 <span class="tag">用户教育</span></div>
+                    <div class="task">权限协作 <span class="tag">待讨论</span></div>
+                  </div>
+                </article>
+                <article class="demo-card">
+                  <h3>功能卡片</h3>
+                  <div class="demo-line"></div>
+                  <div class="demo-line short"></div>
+                  <div class="demo-line orange"></div>
+                  <div class="demo-line"></div>
+                </article>
+              </div>
+              <article class="demo-card" style="margin-top: 16px">
+                <h3>关键指标</h3>
+                <div class="demo-line"></div>
+                <div class="demo-line short"></div>
+              </article>
+            </div>
+          </div>
+
+          <div class="annotation one"><b>1</b> 用户教育</div>
+          <div class="annotation two"><b>2</b> 复用入口</div>
+          <div class="annotation three"><b>3</b> 风险说明</div>
+
+          <aside class="note-card">
+            <header>
+              <h3>用户教育</h3>
+              <small>ID: 20260517203021</small>
+            </header>
+            <p>
+              这个区块用于降低首次使用门槛：先让用户理解“什么是技能”，再进入创建流程。
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="它是什么">
+        <h2 class="section-title">它是什么：把 PRD 长在可交互 Demo 上</h2>
+        <p class="section-lead">
+          PRDemo 这个名字里同时包含 PRD 和 Demo。它保留 PRD 的分析深度，也保留 Demo 的动态表达：页面负责被体验，批注负责解释逻辑，云端空间负责同步协作。
+        </p>
+        <div class="manifesto-card">
+          <aside class="name-card">
+            <div>
+              <strong>PR<span>D</span>emo</strong>
+              <p>D 是 PRD 的 D，也是 Demo 的 D。它代表一种把产品逻辑直接挂载到交互原型上的交付方式。</p>
+            </div>
+            <span class="label">A new PM delivery format</span>
+          </aside>
+          <div class="paradigm-grid">
+            <article class="paradigm">
+              <b>Demo 是产品方案的主体</b>
+              <p>AI 生成的原型、手写页面、Cloudflare Pages 上的静态页面，都可以成为 PRDemo 的承载对象。</p>
+            </article>
+            <article class="paradigm">
+              <b>批注是产品逻辑的挂载层</b>
+              <p>每个功能区块旁边都能沉淀设计原因、用户问题、预期行为和验证思路。</p>
+            </article>
+            <article class="paradigm">
+              <b>云端空间是协作来源</b>
+              <p>同一个 `prd_space` 对应同一份云端批注，让 Demo 和产品说明保持一致。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="产品形态">
+        <h2 class="section-title">打开一个 Demo，就能看到三层信息</h2>
+        <p class="section-lead">
+          PRDemo 保持原始 Demo 不变，在页面上方叠加一层可读、可编辑、可分享的设计批注。读者看到的不只是界面，还能看到界面背后的产品判断。
+        </p>
+        <div class="product-anatomy">
+          <div class="anatomy-stage" aria-label="PRDemo 产品结构示意">
+            <span class="layer-label">原始 Demo 页面：不改代码</span>
+            <div class="demo-product">
+              <aside class="demo-sidebar">
+                <span>技能库</span>
+                <span>数据清洗</span>
+                <span>图表生成</span>
+                <span>权限协作</span>
+              </aside>
+              <main class="demo-main">
+                <section class="demo-hero-card">
+                  <strong>创建技能流程</strong>
+                  <div class="mini-bars">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </section>
+                <section class="demo-row-card">
+                  <strong>复用推荐入口</strong>
+                  <div class="demo-line"></div>
+                  <div class="demo-line short"></div>
+                </section>
+              </main>
+            </div>
+
+            <div class="plugin-toolbar" aria-label="插件工具栏示意">
+              <span>👁</span>
+              <span>✎</span>
+              <span>▤</span>
+              <span>↻</span>
+            </div>
+            <div class="plus-bubble">+</div>
+            <div class="annotation one"><b>1</b> 用户教育</div>
+            <div class="annotation two"><b>2</b> 复用入口</div>
+
+            <aside class="editor-window">
+              <header>
+                <h3>新增设计笔记</h3>
+                <span class="label">重点</span>
+              </header>
+              <div class="editor-tools">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="editor-copy">
+                <b>标题：用户教育</b>
+                <p>为什么这样设计：先解释“技能”是什么，再让用户进入创建，避免一上来就让用户面对复杂配置。</p>
+              </div>
+            </aside>
+          </div>
+
+          <aside class="thought-panel">
+            <h3>一条链接承载三层内容</h3>
+            <p>Demo 展示方案，批注解释判断，云端空间同步讨论。三层叠在一起，构成一份可阅读、可体验、可持续更新的产品交付物。</p>
+            <ul class="callout-list">
+              <li>
+                <b>第一层：可交互 Demo</b>
+                <span>让读者直接点击和查看产品方案，减少纯文字描述带来的理解偏差。</span>
+              </li>
+              <li>
+                <b>第二层：产品批注层</b>
+                <span>序号、标题、详情卡片和编辑入口直接贴在页面元素旁边，不污染 Demo 源码。</span>
+              </li>
+              <li>
+                <b>第三层：云端协作空间</b>
+                <span>分享链接携带空间 ID，同一个链接下的批注来自同一个事实来源。</span>
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="为什么需要">
+        <h2 class="section-title">为什么需要：AI 时代，静态 PRD 越来越跟不上 Demo</h2>
+        <p class="section-lead">
+          AI 可以快速生成可交互 Demo，产品沟通的重心正在从“读文档”转向“看见和体验方案”。但 Demo 本身承载不了全部产品思考，PRDemo 解决的正是这层缺口。
+        </p>
+        <div class="problem-grid">
+          <article class="problem-card">
+            <span class="label">问题一</span>
+            <h3>文档是静态的，Demo 是动态的</h3>
+            <p>
+              传统 PRD 需要读者在脑中还原交互流程；Demo 可以直接被点击、查看和验证。沟通对象越多，动态体验带来的效率差异越明显。
+            </p>
+          </article>
+          <article class="answer-card">
+            <span class="label">问题二</span>
+            <h3>文档很难跟上讨论和迭代</h3>
+            <p>
+              产品想法会随着评审持续变化，静态文档很容易滞后。把逻辑挂在 Demo 元素旁边，可以让描述和页面尽量保持一致。
+            </p>
+          </article>
+        </div>
+        <div class="artifact-row">
+          <article class="artifact">
+            <strong>思考难以只靠 Demo 承载</strong>
+            <span>入口为什么放这里、用户为什么会点、风险在哪里、后续怎么验证，这些逻辑需要贴着界面留下来。</span>
+          </article>
+          <article class="artifact">
+            <strong>静态 HTML 缺少协作能力</strong>
+            <span>传统 Demo 通常只是一个可查看页面，PRDemo 通过云端批注空间让它具备评论、管理和持续更新能力。</span>
+          </article>
+          <article class="artifact">
+            <strong>版本容易漂移</strong>
+            <span>Demo 一版、文档一版、评论又一版，最终很容易对不上。统一链接和空间能降低维护成本。</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="如何解决">
+        <h2 class="section-title">如何解决：围绕 Demo 生产、解释、同步和协作</h2>
+        <p class="section-lead">
+          PRDemo 把“生成 Demo、挂载思考、同步迭代、协作评审”串成一条线。产品经理不用等到 Demo 做完再补文档，产品逻辑会在创作过程中自然沉淀。
+        </p>
+        <div class="storyboard">
+          <article class="story-card">
+            <span class="story-index">01</span>
+            <h3>AI 生成 Demo</h3>
+            <p>产品经理先用 AI 或代码快速做出 HTML Demo，让想法变成可以被讨论、被点击、被验证的界面。</p>
+            <div class="mini-screen">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </article>
+          <article class="story-card">
+            <span class="story-index">02</span>
+            <h3>挂载产品逻辑</h3>
+            <p>hover 到区块旁边出现 +，或者 Alt + 点击，直接补充“为什么这样设计”。批注发生在思考现场。</p>
+            <div class="mini-screen">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </article>
+          <article class="story-card">
+            <span class="story-index">03</span>
+            <h3>看板管理批注</h3>
+            <p>批注多了以后，通过看板搜索、定位、改标题、改状态色卡，像管理一份可交互 PRD 一样管理 Demo。</p>
+            <div class="mini-screen">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </article>
+          <article class="story-card">
+            <span class="story-index">04</span>
+            <h3>分享链接协作</h3>
+            <p>链接里带着 `prd_space`。别人安装插件后打开同一链接，可以查看同一份批注，也可以继续补充评论。</p>
+            <div class="mini-screen">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="批注内容">
+        <h2 class="section-title">批注里写什么：产品判断，而不是零散评论</h2>
+        <p class="section-lead">
+          每条批注都围绕一个页面区块展开，承载设计原因、用户问题、预期行为和验证点。读者可以顺着界面理解产品取舍。
+        </p>
+        <div class="thinking-board">
+          <div class="thinking-list">
+            <article class="thinking-item is-active">
+              <strong>用户教育</strong>
+              <span>#1 · 重点 · 创建技能入口</span>
+            </article>
+            <article class="thinking-item">
+              <strong>复用入口</strong>
+              <span>#2 · 默认 · 推荐模块</span>
+            </article>
+            <article class="thinking-item">
+              <strong>权限风险</strong>
+              <span>#3 · 问题 · 协作设置</span>
+            </article>
+            <article class="thinking-item">
+              <strong>空状态</strong>
+              <span>#4 · 待讨论 · 首次使用</span>
+            </article>
+          </div>
+          <article class="thinking-detail">
+            <h3>批注详情：用户教育</h3>
+            <div class="decision-grid">
+              <div class="decision">
+                <b>为什么这样设计</b>
+                <p>新用户不知道“技能”是可复用的任务能力，先用示例和推荐入口降低概念门槛。</p>
+              </div>
+              <div class="decision">
+                <b>解决什么问题</b>
+                <p>避免用户直接进入复杂配置页后放弃，先建立“我能用它解决什么问题”的认知。</p>
+              </div>
+              <div class="decision">
+                <b>预期用户行为</b>
+                <p>用户先浏览推荐技能，再选择一个模板进入创建，降低从零填写表单的压力。</p>
+              </div>
+              <div class="decision">
+                <b>后续验证点</b>
+                <p>观察创建入口点击率、模板使用率，以及用户是否能在 1 分钟内完成首次技能创建。</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="产品亮点">
+        <h2 class="section-title">产品亮点</h2>
+        <p class="section-lead">
+          PRDemo 的目标不是替代所有产品文档，而是让 Demo 成为更高效的沟通中心：界面、逻辑、讨论和迭代都围绕同一个链接发生。
+        </p>
+        <div class="feature-grid">
+          <article class="feature">
+            <span class="feature-icon">+</span>
+            <h3>不侵入 Demo</h3>
+            <p>作为浮层套在任意 HTML 页面外面，不要求业务 Demo 接入 SDK，也不改变 Demo 本身结构。</p>
+          </article>
+          <article class="feature">
+            <span class="feature-icon">#</span>
+            <h3>元素级产品逻辑</h3>
+            <p>每条批注绑定页面选择器、标题、内容、时间和状态色卡，让读者快速知道这条判断属于哪个功能区块。</p>
+          </article>
+          <article class="feature">
+            <span class="feature-icon">☁</span>
+            <h3>云端唯一来源</h3>
+            <p>同一个 `prd_space` 下的批注保存在云端，确保分享出去的 Demo 和产品说明指向同一份实时来源。</p>
+          </article>
+          <article class="feature">
+            <span class="feature-icon">▤</span>
+            <h3>批注看板</h3>
+            <p>集中搜索、定位、编辑、复制和删除批注，解决批注多了以后分散难管理的问题。</p>
+          </article>
+          <article class="feature">
+            <span class="feature-icon">⌥</span>
+            <h3>不中断交互</h3>
+            <p>编辑模式保留 Demo 原本点击行为，可以先打开菜单、弹窗，再对出现的元素追加批注。</p>
+          </article>
+          <article class="feature">
+            <span class="feature-icon">◎</span>
+            <h3>轻量阅读体验</h3>
+            <p>默认只显示序号和短标题，hover 或选中后展开详情，降低批注对页面完整度的干扰。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell section" aria-label="最终交付">
+        <div class="portfolio-card">
+          <div>
+            <h2 class="section-title">最终交付：一个可协作的 Demo + PRD</h2>
+            <p class="section-lead">
+              PRDemo 的出发点是一种新的 PM 生产方式：用 AI 快速生成可交互 Demo，再把产品背后的分析、逻辑和讨论挂载在 Demo 上。最终交付物从一份静态 PRD，变成一个可以体验、可以阅读、可以协作更新的产品空间。
+            </p>
+            <ul class="resume-points">
+              <li>范式判断：AI 降低了原型生产成本，产品沟通可以从静态 PRD 走向动态 Demo。</li>
+              <li>核心矛盾：Demo 能展示交互，但无法独立承载完整的产品逻辑、假设和取舍。</li>
+              <li>设计方案：以 Chrome 插件承载批注层，让产品思考挂载在任意 HTML Demo 上。</li>
+              <li>协作演进：从本地批注文件迭代到 Supabase 云端空间，让 Demo + PRD 具备协作属性。</li>
+            </ul>
+          </div>
+          <aside class="quote">
+            <p>好的 Demo，不只展示方案，也保留方案形成的过程。</p>
+            <span>Product insight should live where the decision was made.</span>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <div class="footer-card">
+        <div>
+          <strong>PRDemo Cloud</strong>
+          <span>Chrome MV3 Extension · Supabase · Cloudflare Pages · HTML Demo Workflow</span>
+        </div>
+        <span class="fake-button secondary">Demo-native product thinking</span>
+      </div>
+    </footer>
+  </body>
+</html>
