@@ -1,0 +1,9 @@
+
+# ---- 备份整理（自动追加）----
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+*.log
+__pycache__/
